@@ -13,9 +13,9 @@ To help you get started, here are a few examples to use as reference:
 
 ## Why
 
-There is already a [similar SDK framework for Go](https://github.com/tetratelabs/proxy-wasm-go-sdk) maintained by @mathetake, and I totally suggest using that SDK. They are doing fantastic work across the Envoy, WASM, and TinyGo community. This is currently a personal project to experiment with different SDK patterns focused on breaking up the required pieces into logical packages, and enabling a potentially more idiomatic SDK. It's another option for the community.
+There is already a [similar SDK framework for Tiny Go](https://github.com/tetratelabs/proxy-wasm-go-sdk) maintained by [@mathetake](https://github.com/mathetake), and I totally suggest using that SDK. They are doing fantastic work across the Envoy, WASM, and TinyGo communities. This is a personal project to experiment with different SDK patterns focused on breaking up the required pieces into logical packages, and enabling a potentially more idiomatic interface. It's another option for the community.
 
-I've also started playing with enabling WASM filters in [HashiCorp Consul](https://www.consul.io/) using expierimental changes on the [`wasm-filters`](https://github.com/hashicorp/consul/compare/master...wasm-filters) branch. Having a ton of fun learning how exactly this all works at a lower-level, and exposing clean APIs at a higher-level in Consul and Go.
+I've also started playing with enabling WASM filters in [HashiCorp Consul](https://www.consul.io/) using expierimental changes on the [`wasm-filters`](https://github.com/hashicorp/consul/compare/master...wasm-filters) branch. Having a ton of fun learning how exactly this all works at a lower-level, and exposing clean APIs at a higher-level in Consul and this SDK.
 
 The Consul service config to enable WASM filters for an Envoy sidecar proxy looks like this:
 
@@ -37,9 +37,12 @@ wasm_filters = [
   <summary>ℹ️ Full configuration example (click to expand)</summary>
 
   Sample configuration using `wasm_filters` for Consul to configure Envoy sidecar
-  proxies with the `/tmp/filters/replace_response.wasm` WASM filter, assuming this
-  binary file is appropriatley compiled and is avaiable on the local filesystem of
+  proxies with the `/tmp/filters/replace_response.wasm` WASM filter. This is assuming the
+  filter WASM file is appropriatley compiled and is available on the local filesystem of
   the sidecar host.
+
+  This feature isn't yet available in any official Consul versions, and requires you to build a binary
+  from the [`wasm-filters`](https://github.com/hashicorp/consul/compare/master...wasm-filters) branch.
 
   ```hcl
   service {
@@ -93,15 +96,15 @@ func main() {
 <details>
   <summary>ℹ️ Example details (click to expand)</summary>
 
-* `github.com/picatz/hook/pkg/call/http` provides functions to interact with HTTP requests and responses.
-  * `http.OnRequestHeaders` is a function to hook into the proxy. From here you can inspect, set, delete, read, and further handle header-based authn/authz tasks.
+* [`github.com/picatz/hook/pkg/call/http`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http) provides functions to interact with HTTP requests and responses.
+  * [`http.OnRequestHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnRequestHeaders) is a function to hook into the proxy. From here you can inspect, set, delete, read, and further handle header-based authn/authz tasks.
     * You can optionally use the two arguments provided to the function including the `maxSize` (`int` type) and `endOfStream` (`bool` type). You do not _need_ to name these types at all if you do not plan to use them. That is a subtle, often unused, feature of the Go language.
     * To continue processing the request after your logic, return the `action.Continue` type to signal the HTTP stream is ready to be handled again by the proxy.
-  * `http.OnResponseHeaders` is a function to hook into the the response headers, very similiar to `http.OnRequestHeaders`, but for the response side of the upstream service. You can do essentially the exact same things, but applying the logic to the "other side" of the proxy connection.
-  * `http.SetRequestHeader` is a function to set an HTTP _request_ header using a given key and value.
-  * `http.SetResponseHeader` is a function to set an HTTP _response_ header using a given key and value.
+  * [`http.OnResponseHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnResponseHeaders) is a function to hook into the the response headers, very similiar to [`http.OnRequestHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnRequestHeaders), but for the response side from the upstream service. You can do essentially the exact same things, but applying the logic to the "other side" of the proxy connection.
+  * [`http.SetRequestHeader`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#SetRequestHeader) is a function to set an HTTP _request_ header using a given key and value.
+  * [`http.SetResponseHeader`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#SetResponseHeader) is a function to set an HTTP _response_ header using a given key and value.
 * `github.com/picatz/hook/pkg/types/action` provides types to signal the proxy to continue/stop processing the next steps of the request/response stream.
-  * `action.Continue` is a common type used to signal to the proxy to continue handling the connection.
+  * [`action.Continue`](https://pkg.go.dev/github.com/picatz/hook/pkg/types/action) is a common type used to signal to the proxy to continue handling the connection.
 
 </details>
 
@@ -113,7 +116,7 @@ Compile using [`tinygo`](https://tinygo.org/getting-started/) to bulild `example
 $ tinygo build -o example.wasm -scheduler=none -target=wasi -wasm-abi=generic main.go
 ```
 
-### Configure Envoy Proxy
+### Configure Envoy
 
 Add the filter config to the [Envoy](https://github.com/envoyproxy/envoy) `http_filters` section using a version with WASM support:
 
