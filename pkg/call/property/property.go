@@ -9,7 +9,7 @@ import (
 func GetProperty(path []string) ([]byte, error) {
 	var ret *byte
 	var retSize int
-	raw := utils.SerializePropertyPath(path)
+	raw := utils.PropertyPathToBytes(path)
 
 	err := status.AsError(host.ProxyGetProperty(&raw[0], len(raw), &ret, &retSize))
 	if err != nil {
