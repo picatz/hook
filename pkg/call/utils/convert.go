@@ -67,55 +67,36 @@ type Header = [2]string
 type Headers = []Header
 
 func BytesToHeaders(data []byte) Headers {
-	var numberOfHeaders = binary.LittleEndian.Uint32(data[0:4])
-
-	var sizeIndexes = make([]int, numberOfHeaders*2)
-	for i := 0; i < len(sizeIndexes); i++ {
-		x := 4 + i*4
-		sizeIndexes[i] = int(binary.LittleEndian.Uint32(data[x : x+4]))
-	}
-
 	var (
-		sizeIndex int
-		dataIndex = 4 * (1 + 2*int(numberOfHeaders))
-		headers   = make(Headers, numberOfHeaders)
-
-		getSize = func() int {
-			return sizeIndexes[sizeIndex]
-		}
-
-		incSize = func() {
-			sizeIndex++
-			return
-		}
-
-		bumpDataIndex = func(size int) {
-			dataIndex += size + 1
-			return
-		}
-
-		str = func(dataIndex, size int) string {
-			ptr := data[dataIndex : dataIndex+size]
-			str := *(*string)(unsafe.Pointer(&ptr))
-			bumpDataIndex(size)
-			return str
-		}
-
-		setHeader = func(index int, key, value string) {
-			headers[index] = Header{key, value}
-		}
+		numberOfHeaders = binary.LittleEndian.Uint32(data[0:4])
+		sizeIndexes     = make([]int, numberOfHeaders*2)
+		sizeIndex       = 0
+		dataIndex       = 4 * (1 + 2*int(numberOfHeaders))
+		headers         = make(Headers, numberOfHeaders)
 	)
 
+	for i := 0; i < len(sizeIndexes); i++ {
+		sizeIndex := 4 + i*4
+		sizeIndexes[i] = int(binary.LittleEndian.Uint32(data[sizeIndex : sizeIndex+4]))
+	}
+
 	for i := range headers {
-		var keySize = getSize()
-		incSize()
-		var key = str(dataIndex, keySize)
+		// get header key string
+		keySize := sizeIndexes[sizeIndex]
+		sizeIndex++
+		keyBytes := data[dataIndex : dataIndex+keySize]
+		key := *(*string)(unsafe.Pointer(&keyBytes))
+		dataIndex += keySize + 1
 
-		var valueSize = getSize()
-		incSize()
-		var value = str(dataIndex, valueSize)
+		// get header value string
+		valueSize := sizeIndexes[sizeIndex]
+		sizeIndex++
+		valueBytes := data[dataIndex : dataIndex+valueSize]
+		value := *(*string)(unsafe.Pointer(&valueBytes))
+		dataIndex += valueSize + 1
 
-		setHeader(i, key, value)
+		// populate returned headers with found header
+		headers[i] = Header{key, value}
 	}
 
 	return headers
