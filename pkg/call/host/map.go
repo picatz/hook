@@ -46,5 +46,6 @@ func GetMap(mapType wmap.Type) ([][2]string, status.Type) {
 	}
 
 	bs := utils.BytePtrToByteSlice(raw, rvs)
+
 	return utils.BytesToHeaders(bs), status.OK
 }
