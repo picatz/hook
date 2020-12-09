@@ -193,17 +193,23 @@ func DispatchCall(
 	trailers [][2]string,
 	timeoutMillisecond uint32,
 	callBack callout.Callback,
-) (calloutID uint32, err error) {
+) (uint32, error) {
+	// encode headers
 	shs := utils.HeadersToBytes(headers)
 	hp := &shs[0]
 	hl := len(shs)
 
+	// encode trailers
 	sts := utils.HeadersToBytes(trailers)
 	tp := &sts[0]
 	tl := len(sts)
 
+	// encode uri
 	u := utils.StringToBytePtr(upstream)
-	st := host.ProxyHTTPCall(
+
+	// make http call async
+	var calloutID uint32
+	callStatus := host.ProxyHTTPCall(
 		u,
 		len(upstream),
 		hp,
@@ -216,12 +222,13 @@ func DispatchCall(
 		&calloutID,
 	)
 
-	switch st {
+	// check call status
+	switch callStatus {
 	case status.OK:
 		state.RegisterHTTPCallout(calloutID, callBack)
 		return calloutID, nil
 	default:
-		return 0, status.AsError(st)
+		return 0, status.AsError(callStatus)
 	}
 }
 
@@ -229,6 +236,7 @@ type RequestOptions struct {
 	TimeoutMilliseconds uint32
 	Method              string
 	Path                string
+	Authority           string
 	Headers             [][2]string
 	Body                string
 	Trailers            [][2]string
@@ -254,6 +262,13 @@ func WithMethod(method string) RequestOption {
 func WithPath(path string) RequestOption {
 	return func(opts *RequestOptions) error {
 		opts.Path = path
+		return nil
+	}
+}
+
+func WithAuthority(auth string) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Authority = auth
 		return nil
 	}
 }
@@ -304,6 +319,7 @@ func Request(upstream string, requestOptions ...RequestOption) (uint32, error) {
 		Method:              "GET",
 		Path:                "/",
 		Headers:             [][2]string{},
+		Body:                "",
 		Trailers:            [][2]string{},
 		TimeoutMilliseconds: defaultTimeout,
 	}
@@ -317,12 +333,16 @@ func Request(upstream string, requestOptions ...RequestOption) (uint32, error) {
 
 	headers := [][2]string{}
 
+	if opts.Method != "" {
+		headers = append(headers, [2]string{":method", opts.Method})
+	}
+
 	if opts.Path != "" {
 		headers = append(headers, [2]string{":path", opts.Path})
 	}
 
-	if opts.Method != "" {
-		headers = append(headers, [2]string{":method", "GET"})
+	if opts.Authority != "" {
+		headers = append(headers, [2]string{":authority", opts.Authority})
 	}
 
 	headers = append(headers, opts.Headers...)
