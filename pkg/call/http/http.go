@@ -1,6 +1,9 @@
 package http
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/picatz/hook/pkg/call/host"
 	"github.com/picatz/hook/pkg/call/utils"
 	"github.com/picatz/hook/pkg/call/vm/state"
@@ -220,4 +223,116 @@ func DispatchCall(
 	default:
 		return 0, status.AsError(st)
 	}
+}
+
+type RequestOptions struct {
+	TimeoutMilliseconds uint32
+	Method              string
+	Path                string
+	Headers             [][2]string
+	Body                string
+	Trailers            [][2]string
+	Callback            callout.Callback
+}
+
+type RequestOption = func(opts *RequestOptions) error
+
+func WithTimeout(dur time.Duration) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.TimeoutMilliseconds = uint32(dur.Milliseconds())
+		return nil
+	}
+}
+
+func WithMethod(method string) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Method = method
+		return nil
+	}
+}
+
+func WithPath(path string) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Path = path
+		return nil
+	}
+}
+
+func WithHeaders(headers [][2]string) RequestOption {
+	return func(opts *RequestOptions) error {
+		for _, header := range headers {
+			opts.Headers = append(opts.Headers, header)
+		}
+		return nil
+	}
+}
+
+func WithHeader(key, value string) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Headers = append(opts.Headers, [2]string{key, value})
+		return nil
+	}
+}
+
+func WithBody(body string) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Body = body
+		return nil
+	}
+}
+
+func WithTrailers(headers [][2]string) RequestOption {
+	return func(opts *RequestOptions) error {
+		for _, header := range headers {
+			opts.Trailers = append(opts.Trailers, header)
+		}
+		return nil
+	}
+}
+
+func WithCallback(cb callout.Callback) RequestOption {
+	return func(opts *RequestOptions) error {
+		opts.Callback = cb
+		return nil
+	}
+}
+
+const defaultTimeout = 30000
+
+func Request(upstream string, requestOptions ...RequestOption) (uint32, error) {
+	opts := &RequestOptions{
+		Method:              "GET",
+		Path:                "/",
+		Headers:             [][2]string{},
+		Trailers:            [][2]string{},
+		TimeoutMilliseconds: defaultTimeout,
+	}
+
+	for i, opt := range requestOptions {
+		err := opt(opts)
+		if err != nil {
+			return 0, fmt.Errorf("failed to apply request option (starting at 0) %d: %v", i, err)
+		}
+	}
+
+	headers := [][2]string{}
+
+	if opts.Path != "" {
+		headers = append(headers, [2]string{":path", opts.Path})
+	}
+
+	if opts.Method != "" {
+		headers = append(headers, [2]string{":method", "GET"})
+	}
+
+	headers = append(headers, opts.Headers...)
+
+	return DispatchCall(
+		upstream,
+		headers,
+		opts.Body,
+		opts.Trailers,
+		opts.TimeoutMilliseconds,
+		opts.Callback,
+	)
 }
