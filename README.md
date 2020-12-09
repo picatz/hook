@@ -99,11 +99,11 @@ func main() {
 * [`github.com/picatz/hook/pkg/call/http`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http) provides functions to interact with HTTP requests and responses.
   * [`http.OnRequestHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnRequestHeaders) is a function to hook into the proxy. From here you can inspect, set, delete, read, and further handle header-based authn/authz tasks.
     * You can optionally use the two arguments provided to the function including the `maxSize` (`int` type) and `endOfStream` (`bool` type). You do not _need_ to name these types at all if you do not plan to use them. That is a subtle, often unused, feature of the Go language.
-    * To continue processing the request after your logic, return the `action.Continue` type to signal the HTTP stream is ready to be handled again by the proxy.
+    * To continue processing the request after your logic, return the [`action.Continue`](https://pkg.go.dev/github.com/picatz/hook/pkg/types/action#Continue) type to signal the HTTP stream is ready to be handled again by the proxy.
   * [`http.OnResponseHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnResponseHeaders) is a function to hook into the the response headers, very similiar to [`http.OnRequestHeaders`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#OnRequestHeaders), but for the response side from the upstream service. You can do essentially the exact same things, but applying the logic to the "other side" of the proxy connection.
   * [`http.SetRequestHeader`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#SetRequestHeader) is a function to set an HTTP _request_ header using a given key and value.
   * [`http.SetResponseHeader`](https://pkg.go.dev/github.com/picatz/hook/pkg/call/http#SetResponseHeader) is a function to set an HTTP _response_ header using a given key and value.
-* `github.com/picatz/hook/pkg/types/action` provides types to signal the proxy to continue/stop processing the next steps of the request/response stream.
+* [`github.com/picatz/hook/pkg/types/action`](https://pkg.go.dev/github.com/picatz/hook/pkg/types/action) provides types to signal the proxy to continue/stop processing the next steps of the request/response stream.
   * [`action.Continue`](https://pkg.go.dev/github.com/picatz/hook/pkg/types/action) is a common type used to signal to the proxy to continue handling the connection.
 
 </details>
@@ -243,7 +243,7 @@ typed_config:
 
 ### Run with Docker
 
-Run an the `envoyproxy/envoy-dev:latest` container with the required config:
+Run the [`envoyproxy/envoy-dev:latest`](https://hub.docker.com/r/envoyproxy/envoy-dev) container with the required config:
 
 ```console
 $ mkdir -p /tmp/envoy/filters        # setup temp dir to share with container
