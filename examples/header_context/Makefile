@@ -33,7 +33,7 @@ consul-fake-service: require-proper-consul-version
 consul-service-sidecar: require-proper-consul-version
 	@echo "💘 running consul connect envoy sidecar proxy for service 'web'"
 	@echo "🕸 service 'web' is now available in the mesh using envoy"
-	@consul connect envoy -sidecar-for="web" -envoy-binary="$(realpath ~/.getenvoy/builds/wasm/1.15/darwin/bin/envoy)" -- -l debug
+	@consul connect envoy -sidecar-for="web" -envoy-binary="$(ENVOY_PATH)" -- -l debug
 consul-connect: require-proper-consul-version
 	@echo "💘 running consul connect development proxy"
 	@echo "⬆️ upstream 'web' is available on on localhost:9090 through the consul service mesh"

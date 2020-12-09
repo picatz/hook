@@ -13,11 +13,7 @@ func main() {
 			log.Errorf("failed to get request headers: %v", err)
 			return action.Continue
 		}
-		for _, header := range headers {
-			key := header[0]
-			val := header[1]
-			log.Infof("request header sniffed %q: %q", key, val)
-		}
+		log.Infof("request headers sniffed: %v", headers)
 		return action.Continue
 	})
 
@@ -39,11 +35,7 @@ func main() {
 			log.Errorf("failed to get response headers: %v", err)
 			return action.Continue
 		}
-		for _, header := range headers {
-			key := header[0]
-			val := header[1]
-			log.Infof("request header sniffed %q: %q", key, val)
-		}
+		log.Infof("request headers sniffed: %v", headers)
 		return action.Continue
 	})
 
